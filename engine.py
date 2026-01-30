@@ -22,6 +22,15 @@ def simulate_price_paths(log_returns, days_to_predict, time_step, num_simulation
 
     return price_paths, predicted_prices, median, var95, bull
 
+def simulate_portfolio(returns_df, current_prices, weights, days, sims):
+    cov_matrix = returns_df.cov() 
+    avg_returns = returns_df.mean().values
+    num_stocks = len(current_prices)
+
+    L = np.linalg.cholesky(cov_matrix)
+    Z = np.random.standard_normal(days, sims, num_stocks)
+
+    Z_correlated = Z @ L.T
 
 def plot_simulation(price_paths, s0, median, var95, bull):
     plt.figure(figsize=(12, 6))

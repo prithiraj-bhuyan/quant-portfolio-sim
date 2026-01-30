@@ -27,6 +27,17 @@ def get_returns_series(ticker_symbol: str):
         log_returns = np.log(prices/prices.shift(1)).dropna()
 
         return log_returns, prices.iloc[-1]
+    
+def get_portfolio_data(tickers: list[str]):
+    log_returns_list = []
+    curr_prices = []
+    for t in tickers:
+        log_returns, s0 = get_returns_series(t)
+        log_returns_list.append(log_returns)
+        curr_prices.append(s0)
+    all_tickers_returns_df = pd.concat(log_returns_list, axis=1, keys=tickers).dropna()
+    return all_tickers_returns_df, curr_prices
+
 
 
 
