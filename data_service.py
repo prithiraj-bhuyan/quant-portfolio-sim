@@ -1,0 +1,33 @@
+import yfinance as yf
+import models
+from sqlmodel import Session, select
+import pandas as pd
+import numpy as np
+
+def sync_ticker(ticker_symbol: str):
+    df = yf.download(ticker_symbol, period="2y")
+    id = 1
+    with Session(models.engine) as session:
+        for dt, row in df.iterrows():
+            id += 1
+            new_entry = models.PriceHistory(ticker=ticker_symbol, date=dt, close_price=float(row["Close"][ticker_symbol]))
+
+            session.add(new_entry)
+        session.commit()
+    print(f"Synced {ticker_symbol} successfully!")
+
+# sync_ticker(ticker_symbol="MSFT")
+
+def get_returns_series(ticker_symbol: str):
+    with Session(models.engine) as session:
+        query = select(models.PriceHistory).where(models.PriceHistory.ticker == ticker_symbol).order_by(models.PriceHistory.date)
+        results = session.exec(query).all()
+
+        prices = pd.Series(data=[r.close_price for r in results], index=[r.date for r in results])
+        log_returns = np.log(prices/prices.shift(1)).dropna()
+
+        return log_returns, prices.iloc[-1]
+
+
+
+
