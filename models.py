@@ -27,9 +27,11 @@ sqlite_url = f"sqlite:///{sqlite_file}"
 
 engine = create_engine(sqlite_url, echo=True)
 
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+# Uncomment to test locally without FastApi
 
-if __name__ == "__main__":
-    create_db_and_tables()
-    print("Database and tables created successfully!")
+# def create_db_and_tables():
+#     SQLModel.metadata.create_all(engine)
+
+# if __name__ == "__main__":
+#     create_db_and_tables()
+#     print("Database and tables created successfully!")
