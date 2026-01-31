@@ -4,8 +4,16 @@ from database import yield_session
 from repository import update_portfolio_position
 from portfolio_service import get_simulation_inputs
 from engine import simulate_portfolio
+from contextlib import asynccontextmanager
+from database import engine, init_db
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db(engine)
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 @app.post("/portfolio/trade")
 def trade(ticker: str, amount: float, session: Session = Depends(yield_session)):
