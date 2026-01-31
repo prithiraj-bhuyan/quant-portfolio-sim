@@ -23,13 +23,13 @@ def simulate_price_paths(log_returns, days_to_predict, time_step, num_simulation
 
     return price_paths, predicted_prices, median, lower, upper
 
-def simulate_portfolio(returns_df, current_prices, weights, days, sims, time_step):
+def simulate_portfolio(returns_df, current_prices, days, sims, time_step):
     cov_matrix = returns_df.cov() 
     avg_returns = returns_df.mean().values.reshape(1, 1, -1)
     num_stocks = len(current_prices)
 
     L = np.linalg.cholesky(cov_matrix)
-    Z = np.random.standard_normal(days, sims, num_stocks)
+    Z = np.random.standard_normal((days, sims, num_stocks))
 
     Z_correlated = Z @ L.T
 
@@ -38,13 +38,15 @@ def simulate_portfolio(returns_df, current_prices, weights, days, sims, time_ste
 
     G_factor = np.exp((avg_returns - 0.5 * np.square(vol_all_tickers)) * time_step + (vol_all_tickers * Z_correlated * np.sqrt(time_step)))
     yield_paths = np.cumprod(G_factor, axis=0)
-    day_zero = np.ones((1, sims))
+    day_zero = np.ones((1, sims, num_stocks))
     combined_yields = np.vstack([day_zero, yield_paths])
 
+    prices_arr = np.array(current_prices).reshape(1, 1, num_stocks)
+
     # Individual Price Paths (3D: days, sims, stocks)
-    price_paths = current_prices * combined_yields
+    price_paths = prices_arr * combined_yields
     # portfolio_paths is 2D (days, sims)
-    portfolio_paths = np.sum(price_paths * weights, axis=2)
+    portfolio_paths = np.sum(price_paths, axis=2)
 
     # list of total portfolio values on each day
     median_line = np.percentile(portfolio_paths, 50, axis=1)
@@ -66,7 +68,7 @@ def simulate_portfolio(returns_df, current_prices, weights, days, sims, time_ste
         "summary": {
             "initial_value": float(initial_val),
             "expected_ending_value": float(ending_median),
-            "var95_dollar": float(initial_val - ending_lower),
+            "var95_dollar": max(0, float(initial_val - ending_lower)),
             "max_potential_gain": float(ending_upper - initial_val),
             "expected_roi_percent": float(((ending_median / initial_val) - 1) * 100)
         },

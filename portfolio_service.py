@@ -22,7 +22,7 @@ def get_simulation_inputs(session: Session):
     return {
         "returns_df": returns_df,
         "weights": weights,
-        "current_prices": curr_prices,
+        "current_prices": ticker_values,
         "total_value": portfolio_total_val,
         "tickers": ticker_list
     }

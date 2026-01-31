@@ -27,9 +27,8 @@ def run_simulation(sims: int = 10000, session: Session = Depends(yield_session))
         raise HTTPException(status_code=400, detail="Add stocks to your portfolio first!")
     
     returns_df = inputs["returns_df"]
-    weights = inputs["weights"]
-    curr_prices = inputs["curr_prices"]
-    results = simulate_portfolio(returns_df=returns_df, current_prices=curr_prices, weights=weights, days=252, sims=sims, time_step=1/252)
+    curr_prices = inputs["current_prices"]
+    results = simulate_portfolio(returns_df=returns_df, current_prices=curr_prices, days=252, sims=sims, time_step=1)
 
     return results
 

@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Session
 import models
+from models import engine
 
 
 def init_db(engine):
