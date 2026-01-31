@@ -13,24 +13,66 @@ def simulate_price_paths(log_returns, days_to_predict, time_step, num_simulation
     yield_paths = np.cumprod(g_factor, axis=0)
     day_zero = np.ones((1, num_simulations))
     combined_yields = np.vstack([day_zero, yield_paths])
+    # Geometric Brownian Motion (GBM)
     price_paths = s0 * combined_yields
 
     predicted_prices = price_paths[-1, :]
     median = np.percentile(predicted_prices, 50, axis=None)
-    var95 = np.percentile(predicted_prices, 5, axis=None)
-    bull = np.percentile(predicted_prices, 95, axis=None)
+    lower = np.percentile(predicted_prices, 5, axis=None)
+    upper = np.percentile(predicted_prices, 95, axis=None)
 
-    return price_paths, predicted_prices, median, var95, bull
+    return price_paths, predicted_prices, median, lower, upper
 
-def simulate_portfolio(returns_df, current_prices, weights, days, sims):
+def simulate_portfolio(returns_df, current_prices, weights, days, sims, time_step):
     cov_matrix = returns_df.cov() 
-    avg_returns = returns_df.mean().values
+    avg_returns = returns_df.mean().values.reshape(1, 1, -1)
     num_stocks = len(current_prices)
 
     L = np.linalg.cholesky(cov_matrix)
     Z = np.random.standard_normal(days, sims, num_stocks)
 
     Z_correlated = Z @ L.T
+
+    vol_all_tickers = np.sqrt(np.diag(cov_matrix)).reshape(1, 1, -1)
+
+
+    G_factor = np.exp((avg_returns - 0.5 * np.square(vol_all_tickers)) * time_step + (vol_all_tickers * Z_correlated * np.sqrt(time_step)))
+    yield_paths = np.cumprod(G_factor, axis=0)
+    day_zero = np.ones((1, sims))
+    combined_yields = np.vstack([day_zero, yield_paths])
+
+    # Individual Price Paths (3D: days, sims, stocks)
+    price_paths = current_prices * combined_yields
+    # portfolio_paths is 2D (days, sims)
+    portfolio_paths = np.sum(price_paths * weights, axis=2)
+
+    # list of total portfolio values on each day
+    median_line = np.percentile(portfolio_paths, 50, axis=1)
+    lower_line = np.percentile(portfolio_paths, 5, axis=1)
+    upper_line = np.percentile(portfolio_paths, 95, axis=1)
+
+    initial_val = portfolio_paths[0, 0]
+    ending_median = median_line[-1]
+    ending_lower = lower_line[-1]
+    ending_upper = upper_line[-1]
+
+    return {
+        "chart-data": {
+            "labels": list(range(len(median_line))), #days
+            "median": median_line.tolist(),
+            "lower": lower_line.tolist(),
+            "upper": upper_line.tolist()
+        },
+        "summary": {
+            "initial_value": float(initial_val),
+            "expected_ending_value": float(ending_median),
+            "var95_dollar": float(initial_val - ending_lower),
+            "max_potential_gain": float(ending_upper - initial_val),
+            "expected_roi_percent": float(((ending_median / initial_val) - 1) * 100)
+        },
+        "correlations": returns_df.corr().to_dict()
+    }
+
 
 def plot_simulation(price_paths, s0, median, var95, bull):
     plt.figure(figsize=(12, 6))
