@@ -18,6 +18,10 @@ class PriceHistory(SQLModel, table=True):
     date: datetime = Field(index=True)
     close_price: float
 
+class PortfolioItem(SQLModel, table=True):
+    ticker: str = Field(index=True, primary_key=True)
+    quantity: float
+
 sqlite_file = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file}"
 
