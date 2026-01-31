@@ -1,6 +1,5 @@
-from sqlmodel import Session, select
+from sqlmodel import Session
 from models import PortfolioItem
-import models
 
 def update_portfolio_position(ticker: str, amount: float, session: Session):
     ticker = ticker.upper()
@@ -12,6 +11,6 @@ def update_portfolio_position(ticker: str, amount: float, session: Session):
     
     else:
         if amount > 0:
-            new_entry = models.PortfolioItem(ticker=ticker, quantity=amount)
+            new_entry = PortfolioItem(ticker=ticker, quantity=amount)
             session.add(new_entry)
     session.commit()
