@@ -10,6 +10,7 @@ def get_simulation_inputs(session: Session):
     
     ticker_list = [item.ticker for item in items]
     quantities = np.array([item.quantity for item in items])
+    quantity_map = {ticker: float(q) for ticker, q in zip(ticker_list, quantities)}
 
     returns_df, curr_prices = get_portfolio_data(ticker_list)
     curr_prices = np.array(curr_prices)
@@ -24,7 +25,8 @@ def get_simulation_inputs(session: Session):
         "weights": weights,
         "current_prices": ticker_values,
         "total_value": portfolio_total_val,
-        "tickers": ticker_list
+        "tickers": ticker_list,
+        "quantities": quantity_map
     }
     
 

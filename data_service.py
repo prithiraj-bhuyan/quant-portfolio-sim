@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 def sync_ticker(ticker_symbol: str):
-    df = yf.download(ticker_symbol, period="5y")
+    df = yf.download(ticker_symbol, period="15y")
     id = 1
     with Session(models.engine) as session:
         for dt, row in df.iterrows():
@@ -44,8 +44,3 @@ def get_portfolio_data(tickers: list[str]):
         curr_prices.append(s0)
     all_tickers_returns_df = pd.concat(log_returns_list, axis=1, keys=tickers).dropna()
     return all_tickers_returns_df, curr_prices
-
-
-
-
-

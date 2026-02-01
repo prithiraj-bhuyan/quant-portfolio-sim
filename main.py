@@ -15,10 +15,19 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-@app.post("/portfolio/trade")
+@app.post("/portfolio/trade/buy")
 def trade(ticker: str, amount: float, session: Session = Depends(yield_session)):
-    update_portfolio_position(ticker=ticker, amount=amount, session=session)
-    return {"message": f"Successfully updated {ticker} by {amount} shares."}
+    if update_portfolio_position(ticker=ticker, amount=amount, session=session):
+        return {"message": f"Successfully increased {ticker} by {amount} shares."}
+    else:
+        return {f"Error: {ticker} is not a valid ticker symbol or quantity is invalid."}
+
+@app.post("/portfolio/trade/sell")
+def trade(ticker: str, amount: float, session: Session = Depends(yield_session)):
+    if update_portfolio_position(ticker=ticker, amount=(-1)*amount, session=session, trade="sell"):
+        return {"message": f"Successfully decreased {ticker} by {amount} shares."}
+    else:
+        return {f"Error: {ticker} is not a valid ticker symbol or quantity is invalid."}
 
 @app.get("/portfolio/simulate")
 def run_simulation(sims: int = 10000, session: Session = Depends(yield_session)):
@@ -46,11 +55,13 @@ def portfolio_summary(session: Session = Depends(yield_session)):
     total_val = float(inputs["total_value"])
     curr_prices = inputs["current_prices"].tolist()
     tickers = inputs["tickers"]
+    quantities = inputs["quantities"]
 
     return {
         "empty": False,
         "tickers": tickers,
         "current_prices": curr_prices,
         "weights": weights,
-        "total_val": total_val
+        "total_val": total_val,
+        "quantities": quantities
     }
